@@ -1,50 +1,77 @@
-\section*{Solar Irradiance Calculation on a Tilted Surface Using the Hay-Davies Method}
+\section{Irradiance Estimation Models}
 
-The calculation of solar irradiance on a tilted surface using the Hay-Davies method involves several steps, starting with the determination of solar position, estimating clear sky irradiances, and finally applying the Hay-Davies method to compute the total irradiance. Here are the detailed steps and equations used in the process:
+The simulation of solar irradiance utilizes a combination of models provided by PVLIB, which are based on established photovoltaic research. The main models and their respective equations are described below.
 
-\subsection*{Solar Position Calculation}
-The solar zenith and azimuth angles are critical for determining the amount of solar radiation that reaches the Earth's surface at a specific location and time. They are calculated using the following equations:
+\subsection{Clear Sky Model (Ineichen)}
+The Ineichen clear sky model, used for estimating clear sky Global Horizontal Irradiance (GHI), Direct Normal Irradiance (DNI), and Diffuse Horizontal Irradiance (DHI), is represented by the following empirical formula:
+
+\begin{equation}
+I = I_0 \cdot e^{-k \cdot m}
+\label{eq:ineichen}
+\end{equation}
+where \( I_0 \) is the extraterrestrial irradiance, \( k \) is an attenuation coefficient that varies with atmospheric conditions, and \( m \) is the relative air mass.
+
+\subsection{Erbs Model}
+The Erbs model is employed to decompose GHI into DNI and DHI based on the solar zenith angle. The model is particularly useful under conditions where only GHI measurements are available. It is given by:
 
 \begin{align}
-\text{Solar Zenith Angle, } \theta_z &= \cos^{-1}(\sin \phi \sin \delta + \cos \phi \cos \delta \cos h) \\
-\text{Solar Azimuth Angle, } \Psi &= \cos^{-1}\left(\frac{\sin \delta - \sin \phi \cos \theta_z}{\cos \phi \sin \theta_z}\right)
+DNI &= \frac{GHI - DHI}{\cos(\text{zenith})} \\
+DHI &= GHI \cdot d(\text{zenith})
+\label{eq:erbs}
 \end{align}
+where \( d(\text{zenith}) \) is a function defining the fraction of diffuse irradiance as a function of the solar zenith angle. This function is derived from empirical data and provides a way to estimate DHI from GHI.
 
-where $\phi$ is the latitude, $\delta$ is the solar declination, and $h$ is the hour angle.
-
-\subsection*{Clear Sky Irradiance Estimation}
-Using the solar position, we estimate the clear sky global horizontal irradiance ($I_{\text{ghi}}$) and direct normal irradiance ($I_{\text{dni}}$), often using empirical models such as the Ineichen model:
+\subsection{Plane of Array Irradiance Calculation}
+The total irradiance on a plane oriented at a specific tilt and azimuth is calculated by considering the contributions from direct, diffuse, and ground-reflected components. The relevant equations are:
 
 \begin{align}
-I_{\text{dni}} &= I_{\text{ext}} e^{-k / \cos \theta_z} \\
-I_{\text{ghi}} &= I_{\text{dni}} \cos \theta_z + I_{\text{dhi}}
+POA_{direct} &= DNI \cdot \cos(\theta) \\
+POA_{diffuse} &= DHI \cdot \frac{1 + \cos(\phi)}{2} \\
+POA_{reflected} &= GHI \cdot \rho \cdot \frac{1 - \cos(\phi)}{2}
+\label{eq:poa_irradiance}
 \end{align}
+where \( \theta \) is the angle of incidence of the solar radiation, \( \phi \) is the tilt angle of the panel, and \( \rho \) is the albedo or ground reflectance.
 
-where $I_{\text{ext}}$ is the extraterrestrial irradiance, $k$ is an atmospheric clarity coefficient, and $I_{\text{dhi}}$ is the diffuse horizontal irradiance.
+These equations collectively allow for the calculation of the total Plane of Array (POA) irradiance, integrating contributions from all solar components, adjusted for specific panel configurations.
 
-\subsection*{Hay-Davies Method for Tilted Surfaces}
-The Hay-Davies method calculates the total irradiance on a tilted surface as follows:
+\section{Conclusion}
+By applying these models, the simulation accurately represents the irradiance received by photovoltaic panels under various tilt and azimuth conditions, thus enabling optimized design and placement of solar installations.
+\section{Utilization of POA Irradiance for PV Generation Calculation}
+
+\subsection{Components of POA Irradiance}
+The total Plane of Array (POA) irradiance, utilized for calculating power output from a photovoltaic panel, is composed of three distinct parts: direct, diffuse, and reflected irradiance. These components are calculated as follows:
 
 \begin{align}
-I_{t, \text{total}} &= I_{d, \text{isotropic}} + I_{d, \text{circumsolar}} + I_{b, \text{direct}} \cos \theta_i \\
-I_{d, \text{isotropic}} &= I_{h, \text{diffuse}} \frac{1 + \cos \beta}{2} \\
-I_{d, \text{circumsolar}} &= I_{b, \text{direct}} \times \text{Circumsolar Factor} \\
-I_{b, \text{direct}} &= I_{\text{dni}} \cos \theta_i
+POA_{\text{direct}} &= DNI \cdot \cos(\theta) \\
+POA_{\text{diffuse}} &= DHI \cdot \frac{1 + \cos(\phi)}{2} \\
+POA_{\text{reflected}} &= GHI \cdot \rho \cdot \frac{1 - \cos(\phi)}{2}
 \end{align}
 
 where:
 \begin{itemize}
-  \item $\theta_i$ is the angle of incidence of the solar beam on the tilted surface,
-  \item $\beta$ is the tilt angle of the surface,
-  \item $\text{Circumsolar Factor}$ is a model-dependent constant, often taken as a small fraction of $I_{b, \text{direct}}$.
+    \item \( \theta \) is the angle of incidence of the solar radiation on the panel,
+    \item \( \phi \) is the tilt angle of the panel,
+    \item \( \rho \) is the ground reflectance (albedo).
 \end{itemize}
 
-The cosine of the angle of incidence, $\cos \theta_i$, is calculated using:
+\subsection{Power Output Estimation}
+The total POA irradiance, which includes all three components (direct, diffuse, and reflected), is used to estimate the power output of a photovoltaic system:
+
 \begin{equation}
-\cos \theta_i = \sin \theta_z \cos \beta \cos(\Psi - \gamma) + \cos \theta_z \sin \beta
+P_{\text{out}} = \eta \cdot A \cdot (POA_{\text{direct}} + POA_{\text{diffuse}} + POA_{\text{reflected}}) \cdot PR
+\label{eq:pv_power_output}
 \end{equation}
 
-where $\gamma$ is the azimuth angle of the surface.
+This equation highlights the influence of all aspects of solar irradiance on the panel. Specifically, it takes into account how the panel's orientation (tilt and azimuth) and environmental factors like ground reflectance affect the total energy available for conversion into electricity. The formula integrates the contributions as follows:
 
-\subsection*{Conclusion}
-The Hay-Davies method provides a detailed and accurate approach for calculating solar irradiance on tilted surfaces, incorporating effects of both the isotropic and anisotropic components of sky irradiance. This method is particularly useful in photovoltaic simulation and performance modeling.
+\begin{itemize}
+    \item \( POA_{\text{direct}} \) captures the irradiance from the solar disc directly hitting the panel, maximized when the panel directly faces the sun.
+    \item \( POA_{\text{diffuse}} \) accounts for the sky-diffused solar radiation, which is less dependent on the panel's exact angle to the sun but varies with sky clarity and sun position.
+    \item \( POA_{\text{reflected}} \) includes the irradiance reflected from the ground or nearby surfaces onto the panel, influenced by the ground material and the panel's tilt.
+\end{itemize}
+
+\subsection{Efficiency and System Losses}
+The conversion efficiency (\( \eta \)), area of the PV module (\( A \)), and performance ratio (\( PR \)) remain critical to determining the overall system output, incorporating efficiency losses due to factors such as temperature, inverter efficiency, and installation quality.
+
+\subsection{Conclusion}
+By accounting for all components of POA irradiance in the power output calculations, the simulation provides a comprehensive assessment of potential energy production, allowing for optimized system design and better prediction of energy yield under various environmental and installa
